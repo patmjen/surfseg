@@ -7,14 +7,4 @@ target_compile_definitions (surfseg PRIVATE NO_OPENGL)
 
 set_property(TARGET surfseg PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-# Setup linking for all targets
-foreach (EXE ObjView SubIcoView DscView DscSmooth SurfSegment SmoothMesh surfseg)
-	target_link_libraries(${EXE} GEL)
-	if (LINUX)
-		target_link_libraries (${EXE} GL GLU glut)
-	elseif (WIN32)
-		target_link_libraries (${EXE} glew32 glut32)
-	else ()
-		message (FATAL_ERROR "Apple not supported -- you can maybe use the linux target")
-	endif ()
-endforeach ()
+target_link_libraries(surfseg GEL)

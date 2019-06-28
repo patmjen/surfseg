@@ -7,8 +7,6 @@
 #include <algorithm>
 #include <cmath>
 
-#include <GL/glew.h>
-
 #include "manifold_mesh.h"
 #include "util.h"
 

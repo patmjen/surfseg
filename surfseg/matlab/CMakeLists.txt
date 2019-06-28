@@ -1,12 +1,21 @@
 find_package(Matlab)
 
-set (MESH_LIB_ROOT_DIR ${PROJECT_SOURCE_DIR}/../MESH)
+if (DEFINED ENV{MESH_LIB_ROOT_DIR})
+	set (MESH_LIB_ROOT_DIR "$ENV{MESH_LIB_ROOT_DIR}")
+else ()
+	set (MESH_LIB_ROOT_DIR ${PROJECT_SOURCE_DIR}/../MESH)
+endif ()
+
 
 if (Matlab_FOUND)
 	include_directories (${Matlab_INCLUDE_DIRS})
 	include_directories (${PROJECT_SOURCE_DIR}/surfseg/include ${PROJECT_SOURCE_DIR}/surfseg/src)
 	include_directories (${GEL_LIB_ROOT_DIR}/src ${MESH_LIB_ROOT_DIR} ${MESH_LIB_ROOT_DIR}/lib3d/include)
 	if (WIN32)
+		if (NOT DEFINED CMAKE_BUILD_TYPE)
+			# If this was not specified, we assume a release build
+			set (CMAKE_BUILD_TYPE Release)
+		endif ()
 		link_directories (${MESH_LIB_ROOT_DIR}/build/x64-${CMAKE_BUILD_TYPE})
 	else ()
 		link_directories (${MESH_LIB_ROOT_DIR}/build)

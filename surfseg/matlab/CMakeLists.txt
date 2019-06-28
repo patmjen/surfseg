@@ -36,8 +36,10 @@ if (Matlab_FOUND)
 	# Mesh utils
 	matlab_add_mex (NAME mex_gauss_curvature SRC mex_gauss_curvature.cpp matlab_util.cpp LINK_TO surfseg)
 	matlab_add_mex (NAME mex_star_intersect SRC mex_star_intersect.cpp matlab_util.cpp LINK_TO surfseg)
-	matlab_add_mex (NAME mex_hausdorff SRC mex_hausdorff.cpp matlab_util.cpp LINK_TO surfseg mesh)
 	matlab_add_mex (NAME mex_subdiv_icosahedron SRC mex_subdiv_icosahedron.cpp matlab_util.cpp LINK_TO surfseg mesh)
+	if (NOT DEFINED SKIP_MEX_HAUSDORFF OR NOT ${SKIP_MEX_HAUSDORFF})
+		matlab_add_mex (NAME mex_hausdorff SRC mex_hausdorff.cpp matlab_util.cpp LINK_TO surfseg mesh)
+	endif ()
 
 	if (WIN32)
 		# For some reason we have to specify this manually on Windows

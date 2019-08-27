@@ -36,14 +36,15 @@ if (Matlab_FOUND)
 	# Mesh utils
 	matlab_add_mex (NAME mex_gauss_curvature SRC mex_gauss_curvature.cpp matlab_util.cpp LINK_TO surfseg)
 	matlab_add_mex (NAME mex_star_intersect SRC mex_star_intersect.cpp matlab_util.cpp LINK_TO surfseg)
-	matlab_add_mex (NAME mex_subdiv_icosahedron SRC mex_subdiv_icosahedron.cpp matlab_util.cpp LINK_TO surfseg mesh)
+	matlab_add_mex (NAME mex_subdiv_icosahedron SRC mex_subdiv_icosahedron.cpp matlab_util.cpp LINK_TO surfseg)
+	matlab_add_mex (NAME mex_hyperplane_intersect SRC mex_hyperplane_intersect.cpp matlab_util.cpp LINK_TO surfseg)
 	if (NOT DEFINED SKIP_MEX_HAUSDORFF OR NOT ${SKIP_MEX_HAUSDORFF})
 		matlab_add_mex (NAME mex_hausdorff SRC mex_hausdorff.cpp matlab_util.cpp LINK_TO surfseg mesh)
 	endif ()
 
 	if (WIN32)
 		# For some reason we have to specify this manually on Windows
-		foreach (EXE mex_surfcut mex_ksurfcut mex_surfcut_planesep mex_surfcut_planesep_dual mex_surfcut_planesep_qpbo mex_surfcut_4d mex_gauss_curvature mex_star_intersect mex_hausdorff mex_subdiv_icosahedron)
+		foreach (EXE mex_surfcut mex_ksurfcut mex_surfcut_planesep mex_surfcut_planesep_dual mex_surfcut_planesep_qpbo mex_surfcut_4d mex_gauss_curvature mex_star_intersect mex_hausdorff mex_subdiv_icosahedron mex_hyperplane_intersect)
 			target_link_libraries (${EXE} ${Matlab_ROOT_DIR}/extern/lib/win64/microsoft/libmat.lib ${Matlab_ROOT_DIR}/extern/lib/win64/microsoft/libmx.lib ${Matlab_ROOT_DIR}/extern/lib/win64/microsoft/libut.lib)
 			set_target_properties (${EXE} PROPERTIES LINK_FLAGS "/export:mexFunction /debug")
 		endforeach ()

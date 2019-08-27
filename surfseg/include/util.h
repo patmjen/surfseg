@@ -11,7 +11,7 @@ namespace std {
     // We need to make our hash specialization since std::pair does not have one
     template <>
     struct hash<std::pair<int, int>> {
-        size_t operator()(const std::pair<int, int>& key) const;
+        size_t operator()(const std::pair<int, int>& key) const noexcept;
     };
 
     template <size_t N>

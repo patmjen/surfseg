@@ -5,6 +5,20 @@
 
 #include "util.h"
 
+Vec4f cross4(Vec4f t, Vec4f u, Vec4f v)
+{
+	// See: https://math.stackexchange.com/a/2371039
+	float a1 = t[3] * u[2] * v[1] - t[2] * u[3] * v[1] - t[3] * u[1] * v[2] +
+		t[1] * u[3] * v[2] + t[2] * u[1] * v[3] - t[1] * u[2] * v[3];
+	float a2 = -t[3] * u[2] * v[0] + t[2] * u[3] * v[0] + t[3] * u[0] * v[2] -
+		t[0] * u[3] * v[2] - t[2] * u[0] * v[3] + t[0] * u[2] * v[3];
+	float a3 = t[3] * u[1] * v[0] - t[1] * u[3] * v[0] - t[3] * u[0] * v[1] +
+		t[0] * u[3] * v[1] + t[1] * u[0] * v[3] - t[0] * u[1] * v[3];
+	float a4 = -t[2] * u[1] * v[0] + t[1] * u[2] * v[0] + t[2] * u[0] * v[1] -
+		t[0] * u[2] * v[1] - t[1] * u[0] * v[2] + t[0] * u[1] * v[2];
+	return Vec4f(a1, a2, a3, a4);
+}
+
 TetMesh4d::TetMesh4d(const std::vector<Vec4f>& vertexPositions,
 	const std::vector<std::array<int, 4>>& tetIdxs)
 {
@@ -341,16 +355,7 @@ Vec4f TetMesh4d::tetNormal(const Tetrahedron& tet) const
 	Vec4f u = v3 - v1;
 	Vec4f v = v4 - v1;
 
-	// See: https://math.stackexchange.com/a/2371039
-	float a1 = t[3] * u[2] * v[1] - t[2] * u[3] * v[1] - t[3] * u[1] * v[2] +
-		t[1] * u[3] * v[2] + t[2] * u[1] * v[3] - t[1] * u[2] * v[3];
-	float a2 = -t[3] * u[2] * v[0] + t[2] * u[3] * v[0] + t[3] * u[0] * v[2] -
-		t[0] * u[3] * v[2] - t[2] * u[0] * v[3] + t[0] * u[2] * v[3];
-	float a3 = t[3] * u[1] * v[0] - t[1] * u[3] * v[0] - t[3] * u[0] * v[1] +
-		t[0] * u[3] * v[1] + t[1] * u[0] * v[3] - t[0] * u[1] * v[3];
-	float a4 = -t[2] * u[1] * v[0] + t[1] * u[2] * v[0] + t[2] * u[0] * v[1] -
-		t[0] * u[2] * v[1] - t[1] * u[0] * v[2] + t[0] * u[1] * v[2];
-	return Vec4f(a1, a2, a3, a4);
+	return cross4(t, u, v);
 }
 
 void TetMesh4d::computeTetNormals(bool normalize)

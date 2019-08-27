@@ -11,6 +11,8 @@
 
 using namespace CGLA;
 
+Vec4f cross4(Vec4f t, Vec4f u, Vec4f v);
+
 /** Incidence simplicial data structure for storing 3D simplicial complexes in 4D space.
   * NOTE: This code was adapted from the SimplexMesh class.
   */

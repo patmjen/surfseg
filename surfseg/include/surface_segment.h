@@ -27,7 +27,10 @@ ManifoldMesh surfaceCut(const Volume<float>& cost, const ManifoldMesh&& init,
     int numSamples, float sampleStep, int maxDiff, CostType costType);
 
 TetMesh4d surfaceCut4d(const Volume4d<float>& cost, TetMesh4d mesh,
-	int numSamples, float sampleStep, int maxDiff, CostType costType, bool bend = false);
+	int numSamples, float sampleStep, int maxDiff, CostType costType);
+template <class Func>
+TetMesh4d surfaceCut4d(const Volume4d<float>& vol, TetMesh4d mesh,
+	int numSamples, float sampleStep, int maxDiff, CostType costType, Func costFunc);
 
 ManifoldMesh surfaceCutPlaneSep(const Volume<float>& cost, const ManifoldMesh& init,
 	int numSamples, float sampleStep, int maxDiff, CostType costType, std::vector<Vec3f> planeNormals,
@@ -43,7 +46,7 @@ std::vector<ManifoldMesh> surfaceCutPlaneSepQPBO(const Volume<float>& cost, std:
 std::vector<ManifoldMesh> surfaceCutPlaneSepDual(const Volume<float>& cost, std::vector<ManifoldMesh> meshes,
 	int numSamples, float sampleStep, int maxDiff, CostType costType, const std::vector<Vec3f>& centers,
 	const std::vector<std::vector<size_t>>& connections);
-std::vector<ManifoldMesh> surfaceCutPlaneSepDualParallel(const Volume<float>& cost, 
+std::vector<ManifoldMesh> surfaceCutPlaneSepDualParallel(const Volume<float>& cost,
 	std::vector<ManifoldMesh> meshes, int numSamples, float sampleStep, int maxDiff, CostType costType,
 	const std::vector<Vec3f>& centers, const std::vector<std::vector<size_t>>& connections, int numThreads);
 

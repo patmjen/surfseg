@@ -9,25 +9,52 @@
 #include <GEL/CGLA/Vec4f.h>
 
 #include "tet_mesh_4d.h"
+#include "volume4d.h"
 #include "surface_segment.h"
 #include "matlab_util.h"
 
-
 using namespace CGLA;
+
+float simpleRegionCost(const Volume4d<float>& vol, Vec4f pos)
+{
+	float x = vol.interp(pos);
+	return 10*x - (1 - x);
+}
+
+float simpleOnSurfaceCost(const Volume4d<float>& vol, Vec4f pos)
+{
+	// Use simple central difference for gradient
+	Vec4f zero = Vec4f(0);
+
+	Vec4f dxp = zero; dxp[0] = pos[0] <= vol.nx - 2 ? 1 : 0;
+	Vec4f dxn = zero; dxp[0] = pos[0] >= 1 ? -1 : 0;
+
+	Vec4f dyp = zero; dyp[1] = pos[1] <= vol.ny - 2 ? 1 : 0;
+	Vec4f dyn = zero; dyp[1] = pos[1] >= 1 ? -1 : 0;
+
+	Vec4f dzp = zero; dzp[2] = pos[2] <= vol.nz - 2 ? 1 : 0;
+	Vec4f dzn = zero; dzp[2] = pos[2] >= 1 ? -1 : 0;
+
+	Vec3f grad = 0.5 * Vec3f(
+		vol.interp(pos + dxp) - vol.interp(pos + dxn),
+		vol.interp(pos + dyp) - vol.interp(pos + dyn),
+		vol.interp(pos + dzp) - vol.interp(pos + dzn)
+	);
+	return -length(grad);
+}
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-	ensureOrError(nrhs == 8, "Must supply 8 inputs");
+	ensureOrError(nrhs == 7, "Must supply 7 inputs");
 	ensureOrError(isSize(prhs[1], { -1, 4 }), "Tets must be an N x 4 array");
 	ensureOrError(isSize(prhs[2], { -1, 4 }), "Vertices must be an M x 4 array");
-	Volume4d<float> cost = getVolume4dChecked<float>(prhs[0], "Cost");
+	Volume4d<float> vol = getVolume4dChecked<float>(prhs[0], "Volume");
 	Volume<int> tetVol = getVolumeChecked<int>(prhs[1], "Tets");
 	Volume<float> vertVol = getVolumeChecked<float>(prhs[2], "Vertices");
 	int numSamples = getCastScalarChecked<int>(prhs[3], "numSamples");
 	float sampleStep = getCastScalarChecked<float>(prhs[4], "sampleStep");
 	int maxDiff = getCastScalarChecked<int>(prhs[5], "maxDiff");
 	CostType costType = static_cast<CostType>(getCastScalarChecked<int>(prhs[6], "costType"));
-	bool bend = getCastScalarChecked<bool>(prhs[7], "bend");
 
 	size_t nverts = vertVol.nx;
 	size_t ntets = tetVol.nx;
@@ -41,17 +68,21 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	tets.reserve(ntets);
 	for (int i = 0; i < ntets; ++i) {
 		// Subtract 1 since MATLAB uses 1-indexing
-		tets.push_back({ 
-			tetVol.at(i, 0, 0) - 1, 
-			tetVol.at(i, 1, 0) - 1, 
-			tetVol.at(i, 2, 0) - 1, 
+		tets.push_back({
+			tetVol.at(i, 0, 0) - 1,
+			tetVol.at(i, 1, 0) - 1,
+			tetVol.at(i, 2, 0) - 1,
 			tetVol.at(i, 3, 0) - 1
 		});
 	}
 
 	TetMesh4d mesh(vertices, tets);
 
-	mesh = surfaceCut4d(cost, mesh, numSamples, sampleStep, maxDiff, costType, bend);
+	if (costType == CostType::ON_SURFACE) {
+		mesh = surfaceCut4d(vol, mesh, numSamples, sampleStep, maxDiff, costType, simpleOnSurfaceCost);
+	} else {
+		mesh = surfaceCut4d(vol, mesh, numSamples, sampleStep, maxDiff, costType, simpleRegionCost);
+	}
 
 	mxArray *mxVerts = mxCreateNumericMatrix(nverts, 4, mxSINGLE_CLASS, mxREAL);
 	mxArray *mxTets = mxCreateNumericMatrix(ntets, 4, mxINT32_CLASS, mxREAL);

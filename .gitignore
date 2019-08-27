@@ -1,0 +1,11 @@
+*.mex*
+*.bin
+*.pdb
+*.manifest
+*.dll
+*.exp
+*.lib
+.vscode
+.vs
+**/build
+**/data

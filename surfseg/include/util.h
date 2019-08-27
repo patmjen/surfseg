@@ -16,16 +16,7 @@ namespace std {
 
     template <size_t N>
     struct hash<std::array<int, N>> {
-        size_t operator()(const std::array<int, N>& key) const
-        {
-            // Code from https://codereview.stackexchange.com/q/171999
-            static std::hash<int> hasher;
-            size_t result = 0;
-            for (int k : key) {
-                result = result * 31 + hasher(k);
-            }
-            return result;
-        }
+        size_t operator()(const std::array<int, N>& key) const noexcept;
     };
 } // std
 

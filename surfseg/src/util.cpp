@@ -8,18 +8,6 @@ size_t std::hash<std::pair<int, int>>::operator()(const std::pair<int, int>& key
     return hasher(tohash);
 }
 
-template <size_t N>
-size_t std::hash<std::array<int, N>>::operator()(const std::array<int, N>& key) const noexcept
-{
-    // Code from https://codereview.stackexchange.com/q/171999
-    static std::hash<int> hasher;
-    size_t result = 0;
-    for (int k : key) {
-        result = result * 31 + hasher(k);
-    }
-    return result;
-}
-
 void graphErrFunc(const char *msg)
 {
 	// To avoid crashing the program we throw an exception here since Graph will otherwise call exit(1)

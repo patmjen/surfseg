@@ -215,48 +215,6 @@ inline VecTy getCastVectorChecked(const mxArray *a, const std::string& errPrefix
 }
 
 template <class Ty>
-inline Volume<Ty> getVolumeChecked(const mxArray *a, const std::string& errPrefixStr = "Value")
-{
-	mxClassID classId = mxGetClassID(a);
-	const char *errPrefix = errPrefixStr.c_str();
-
-	ensureOrError(!mxIsComplex(a), "%s must be real", errPrefix);
-	ensureMatchingClass<Ty>(a, errPrefixStr);
-	ensureOrError(mxGetNumberOfDimensions(a) <= 3, "%s have must at most 3 dimensions", errPrefix);
-
-	const mwSize *dims = mxGetDimensions(a);
-	Volume<Ty> out;
-	out.nx = dims[0];
-	out.ny = dims[1];
-	out.nz = mxGetNumberOfDimensions(a) > 2 ? dims[2] : 1;
-	// Make a shared pointer with no deleter, since the memory comes from MATLAB
-	out.data = std::shared_ptr<Ty>(static_cast<Ty *>(mxGetData(a)), [](auto) {});
-	return out;
-}
-
-template <class Ty>
-inline Volume4d<Ty> getVolume4dChecked(const mxArray *a, const std::string& errPrefixStr = "Value")
-{
-	// TODO: Merge with getVolumeChecked
-	mxClassID classId = mxGetClassID(a);
-	const char *errPrefix = errPrefixStr.c_str();
-
-	ensureOrError(!mxIsComplex(a), "%s must be real", errPrefix);
-	ensureMatchingClass<Ty>(a, errPrefixStr);
-	ensureOrError(mxGetNumberOfDimensions(a) <= 4, "%s have must at most 4 dimensions", errPrefix);
-
-	const mwSize *dims = mxGetDimensions(a);
-	Volume4d<Ty> out;
-	out.nx = dims[0];
-	out.ny = dims[1];
-	out.nz = mxGetNumberOfDimensions(a) > 2 ? dims[2] : 1;
-	out.nt = mxGetNumberOfDimensions(a) > 3 ? dims[3] : 1;
-	// Make a shared pointer with no deleter, since the memory comes from MATLAB
-	out.data = std::shared_ptr<Ty>(static_cast<Ty *>(mxGetData(a)), [](auto) {});
-	return out;
-}
-
-template <class Ty>
 inline std::shared_ptr<Ty> getCastSharedPtrChecked(const mxArray *a, const std::string& errPrefixStr = "Value")
 {
 	mxClassID classId = mxGetClassID(a);
@@ -281,6 +239,66 @@ inline std::shared_ptr<Ty> getCastSharedPtrChecked(const mxArray *a, const std::
 		}
 		return out;
 	}
+}
+
+template <class Ty>
+inline Volume<Ty> getVolumeChecked(const mxArray *a, const std::string& errPrefixStr = "Value")
+{
+	mxClassID classId = mxGetClassID(a);
+	const char *errPrefix = errPrefixStr.c_str();
+
+	ensureOrError(!mxIsComplex(a), "%s must be real", errPrefix);
+	ensureMatchingClass<Ty>(a, errPrefixStr);
+	ensureOrError(mxGetNumberOfDimensions(a) <= 3, "%s have must at most 3 dimensions", errPrefix);
+
+	const mwSize *dims = mxGetDimensions(a);
+	Volume<Ty> out;
+	out.nx = dims[0];
+	out.ny = dims[1];
+	out.nz = mxGetNumberOfDimensions(a) > 2 ? dims[2] : 1;
+	// Make a shared pointer with no deleter, since the memory comes from MATLAB
+	out.data = std::shared_ptr<Ty>(static_cast<Ty *>(mxGetData(a)), [](auto) {});
+	return out;
+}
+
+template <class Ty>
+inline Volume<Ty> getCastVolumeChecked(const mxArray *a, const std::string& errPrefixStr = "Value")
+{
+	mxClassID classId = mxGetClassID(a);
+	const char *errPrefix = errPrefixStr.c_str();
+
+	ensureOrError(!mxIsComplex(a), "%s must be real", errPrefix);
+	ensureOrError(mxGetNumberOfDimensions(a) <= 3, "%s have must at most 3 dimensions", errPrefix);
+
+	const mwSize *dims = mxGetDimensions(a);
+	Volume<Ty> out;
+	out.nx = dims[0];
+	out.ny = dims[1];
+	out.nz = mxGetNumberOfDimensions(a) > 2 ? dims[2] : 1;
+	out.data = getCastSharedPtrChecked<Ty>(a, errPrefixStr);
+	return out;
+}
+
+template <class Ty>
+inline Volume4d<Ty> getVolume4dChecked(const mxArray *a, const std::string& errPrefixStr = "Value")
+{
+	// TODO: Merge with getVolumeChecked
+	mxClassID classId = mxGetClassID(a);
+	const char *errPrefix = errPrefixStr.c_str();
+
+	ensureOrError(!mxIsComplex(a), "%s must be real", errPrefix);
+	ensureMatchingClass<Ty>(a, errPrefixStr);
+	ensureOrError(mxGetNumberOfDimensions(a) <= 4, "%s have must at most 4 dimensions", errPrefix);
+
+	const mwSize *dims = mxGetDimensions(a);
+	Volume4d<Ty> out;
+	out.nx = dims[0];
+	out.ny = dims[1];
+	out.nz = mxGetNumberOfDimensions(a) > 2 ? dims[2] : 1;
+	out.nt = mxGetNumberOfDimensions(a) > 3 ? dims[3] : 1;
+	// Make a shared pointer with no deleter, since the memory comes from MATLAB
+	out.data = std::shared_ptr<Ty>(static_cast<Ty *>(mxGetData(a)), [](auto) {});
+	return out;
 }
 
 int getMaxCompThreads();

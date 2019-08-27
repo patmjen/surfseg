@@ -97,8 +97,8 @@ void SubdividedIcosahedron::buildIcosahedron(const Vec3f& center, float r)
 void SubdividedIcosahedron::rescale(float newR) noexcept
 {
     const float scale = newR / r_;
-    for (auto& p : vertPositions) {
-        p = (p - center_)*scale + center_;
+    for (auto& v : vertices) {
+        v.pos = (v.pos - center_)*scale + center_;
     }
     r_ = newR;
 }
@@ -106,8 +106,8 @@ void SubdividedIcosahedron::rescale(float newR) noexcept
 void SubdividedIcosahedron::move(const Vec3f& newCenter) noexcept
 {
     Vec3f diff = newCenter - center_;
-    for (auto& p : vertPositions) {
-        p += diff;
+    for (auto& v : vertices) {
+        v.pos += diff;
     }
     center_ = newCenter;
 }
@@ -115,8 +115,8 @@ void SubdividedIcosahedron::move(const Vec3f& newCenter) noexcept
 void SubdividedIcosahedron::moveAndRescale(const Vec3f& newCenter, float newR) noexcept
 {
     const float scale = newR / r_;
-    for (auto& p : vertPositions) {
-        p = (p - center_)*scale + newCenter;
+    for (auto& v : vertices) {
+        v.pos = (v.pos - center_)*scale + newCenter;
     }
     r_ = newR;
     center_ = newCenter;
@@ -146,7 +146,6 @@ void SubdividedIcosahedron::singleSubdivide_()
 
     newFaces.reserve(4 * faces.size());
 	vertices.reserve(vertices.size() + edges.size() / 2);
-	vertPositions.reserve(vertices.size());
     edges.reserve(2 * edges.size() + 6 * faces.size());
 
     std::unordered_map<EdgeKey, VertKey> addedVertices;
@@ -188,7 +187,7 @@ void SubdividedIcosahedron::singleSubdivide_()
                 vn.edge = ekn;
                 vn.self = vkn;
                 Vertex vnOld = vertices[edges[e.next].vert];
-                vertPositions.push_back(normalize(0.5*(vpos(v) + vpos(vnOld)) - center_)*r_ + center_);
+                vn.pos = normalize(0.5*(v.pos + vnOld.pos) - center_)*r_ + center_;
 
                 // We have not processed this edge so the twin pointer for e still points to an old edge
                 en.twin = e.twin;

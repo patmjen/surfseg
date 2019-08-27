@@ -17,20 +17,12 @@ const ManifoldMesh::EdgeKey ManifoldMesh::INVALID_EDGE;
 ManifoldMesh::ManifoldMesh(const ManifoldMesh& other) :
 	vertices(other.vertices),
 	faces(other.faces),
-	edges(other.edges),
-	vertPositions(other.vertPositions),
-	vertNormals(other.vertNormals),
-	faceNormals(other.faceNormals)
-{}
+	edges(other.edges) {}
 
 ManifoldMesh::ManifoldMesh(ManifoldMesh&& other) :
 	vertices(std::move(other.vertices)),
 	faces(std::move(other.faces)),
-	edges(std::move(other.edges)),
-	vertPositions(std::move(other.vertPositions)),
-	vertNormals(std::move(other.vertNormals)),
-	faceNormals(std::move(other.faceNormals))
-{}
+	edges(std::move(other.edges)) {}
 
 ManifoldMesh& ManifoldMesh::operator=(const ManifoldMesh& other)
 {
@@ -38,9 +30,6 @@ ManifoldMesh& ManifoldMesh::operator=(const ManifoldMesh& other)
 		vertices = other.vertices;
 		faces = other.faces;
 		edges = other.edges;
-		vertPositions = other.vertPositions;
-		vertNormals = other.vertNormals;
-		faceNormals = other.faceNormals;
 	}
 	return *this;
 }
@@ -51,9 +40,6 @@ ManifoldMesh& ManifoldMesh::operator=(ManifoldMesh&& other)
 		vertices = std::move(other.vertices);
 		faces = std::move(other.faces);
 		edges = std::move(other.edges);
-		vertPositions = std::move(other.vertPositions);
-		vertNormals = std::move(other.vertNormals);
-		faceNormals = std::move(other.faceNormals);
 	}
 	return *this;
 }
@@ -63,9 +49,6 @@ void ManifoldMesh::clear()
 	vertices.clear();
 	faces.clear();
 	edges.clear();
-	vertPositions.clear();
-	vertNormals.clear();
-	faceNormals.clear();
 }
 
 void ManifoldMesh::build(std::vector<Vec3f> vertexPositions,
@@ -125,10 +108,10 @@ void ManifoldMesh::build(std::vector<Vec3f> vertexPositions,
 	};
 
 	// Add vertices
-	vertPositions = vertexPositions;
 	for (const Vec3f& pos : vertexPositions) {
 		Vertex vert;
 		vert.self = vertices.size();
+		vert.pos = pos;
 		vertices.push_back(vert);
 	}
 
@@ -164,9 +147,10 @@ void ManifoldMesh::laplaceSmooth(float lambda, int niter)
 		return;
 	}
 	// Set each vertex position to weighted mean of its neighbors
+	std::vector<Vec3f> newPositions;
+	newPositions.reserve(vertices.size());
 	for (int iter = 0; iter < niter; ++iter) {
-		std::vector<Vec3f> newPositions;
-		newPositions.reserve(vertices.size());
+		newPositions.clear(); // NOTE: This does **not** deallocate any memory
 		// Compute all new positions
 		for (const auto& v : vertices) {
 			EdgeKey ek0 = twin(v.edge);
@@ -174,15 +158,19 @@ void ManifoldMesh::laplaceSmooth(float lambda, int niter)
 			Vec3f newPos(0);
 			float nn = 0.0f;
 			do {
-				const Vec3f p = vertPositions[edges[ek].vert];
+				const Vec3f p = vertices[edges[ek].vert].pos;
 				newPos += p;
 				nn += 1.0f;
 				ek = twin(next(ek)); // Next neighbor
 			} while (ek != ek0);
-			newPositions.push_back((1.0f - lambda) * vpos(v) + lambda * (newPos / nn));
+			newPositions.push_back((1.0f - lambda) * v.pos + lambda * (newPos / nn));
 		}
 		// Update vertex positions
-		vertPositions = std::move(newPositions);
+		int idx = 0;
+		for (auto& v : vertices) {
+			v.pos = newPositions[idx];
+			++idx;
+		}
 	}
 }
 
@@ -263,7 +251,7 @@ void ManifoldMesh::splitEdge(EdgeKey ek, float a)
 	Vertex& vn = vertices[vkn];
 	vn.self = vkn;
 	vn.edge = ek40;
-	vpos(vn) = 0.25*(vpos(vk0) + vpos(vk1) + vpos(vk2) + vpos(vk3));
+	vn.pos = 0.25*(vertices[vk0].pos + vertices[vk1].pos + vertices[vk2].pos + vertices[vk3].pos);
 }
 
 void ManifoldMesh::flipEdge(EdgeKey ek)
@@ -414,15 +402,15 @@ float ManifoldMesh::computeBoundingSphere(Vec3f& center) const noexcept
 {
 	// Compute centroid
 	center = Vec3f(0);
-	for (const auto& p : vertPositions) {
-		center += p;
+	for (const auto& v : vertices) {
+		center += v.pos;
 	}
 	center /= vertices.size();
 
 	// Compute max. distance to centroid
 	float r = 0;
-	for (const auto& p : vertPositions) {
-		r = std::max(r, length(p - center));
+	for (const auto& v : vertices) {
+		r = std::max(r, length(v.pos - center));
 	}
 	return r;
 }
@@ -439,8 +427,8 @@ std::vector<float> ManifoldMesh::gaussCurvatures() const
 		EdgeKey ek = ek0;
 		do {
 			EdgeKey ekn = twin(next(ek));  // Next neighbor
-			const Vec3f& e1 = vpos(edges[ek].vert) - vpos(v);
-			const Vec3f& e2 = vpos(edges[ekn].vert) - vpos(v);
+			const Vec3f& e1 = vertices[edges[ek].vert].pos - v.pos;
+			const Vec3f& e2 = vertices[edges[ekn].vert].pos - v.pos;
 			Ag -= acosf(dot(normalize(e1), normalize(e2)));
 			As += length(cross(e1, e2));
 			ek = ekn;
@@ -459,22 +447,20 @@ Vec3f ManifoldMesh::faceNormal(FaceKey fk) const
 Vec3f ManifoldMesh::faceNormal(const Face& f) const
 {
 	EdgeKey ek = f.edge;
-	Vec3f v0 = vpos(edges[ek].vert);
-	Vec3f v1 = vpos(edges[next(ek)].vert);
-	Vec3f v2 = vpos(edges[next(next(ek))].vert);
+	Vec3f v0 = vertices[edges[ek].vert].pos;
+	Vec3f v1 = vertices[edges[next(ek)].vert].pos;
+	Vec3f v2 = vertices[edges[next(next(ek))].vert].pos;
 	return cross(v1 - v0, v2 - v0);
 }
 
 void ManifoldMesh::computeFaceNormals(bool normalize)
 {
-	faceNormals.clear();
-	faceNormals.reserve(faces.size());
 	for (Face& f : faces) {
 		Vec3f n = faceNormal(f);
 		if (normalize) {
 			n = CGLA::normalize(n);
 		}
-		faceNormals.push_back(n);
+		f.normal = n;
 	}
 }
 
@@ -490,10 +476,10 @@ Vec3f ManifoldMesh::vertexNormal(const Vertex& v, bool faceNormalsComputed) cons
 	do {
 		EdgeKey ekn = next(twin(ek));
 		FaceKey fk = edges[ek].face;
-		Vec3f e1 = vpos(edges[twin(ek)].vert) - vpos(v);
-		Vec3f e2 = vpos(edges[twin(ekn)].vert) - vpos(v);
+		Vec3f e1 = vertices[edges[twin(ek)].vert].pos - v.pos;
+		Vec3f e2 = vertices[edges[twin(ekn)].vert].pos - v.pos;
 		float a = acosf(dot(normalize(e1), normalize(e2)));
-		n += a * (faceNormalsComputed ? faceNormals[fk] : faceNormal(fk));
+		n += a * (faceNormalsComputed ? faces[fk].normal : faceNormal(fk));
 		ek = ekn;
 	} while (ek != v.edge);
 	return n;
@@ -504,14 +490,12 @@ void ManifoldMesh::computeVertexNormals(bool faceNormalsComputed, bool normalize
 	if (!faceNormalsComputed) {
 		computeFaceNormals(normalize);
 	}
-	vertNormals.clear();
-	vertNormals.reserve(vertices.size());
 	for (Vertex& v : vertices) {
 		Vec3f n = vertexNormal(v, true);
 		if (normalize) {
 			n = CGLA::normalize(n);
 		}
-		vertNormals.push_back(n);
+		v.normal = n;
 	}
 }
 
@@ -521,7 +505,8 @@ void ManifoldMesh::saveToObj(const std::string& fname) const
 	assert(file); // Ensure file was opened
 
 	// Write vertices
-	for (const auto& p : vertPositions) {
+	for (const auto& v : vertices) {
+		const auto& p = v.pos;
 		file << "v " << p[0] << " " << p[1] << " " << p[2] << "\n";
 	}
 
@@ -591,18 +576,18 @@ void ManifoldMesh::render(bool vertexNormals) const
 			Vertex v2 = vertices[edges[e2].vert];
 
 			if (vertexNormals) {
-				glNormal3fv(vnormal(v0).get());
-				glVertex3fv(vpos(v0).get());
-				glNormal3fv(vnormal(v1).get());
-				glVertex3fv(vpos(v1).get());
-				glNormal3fv(vnormal(v2).get());
-				glVertex3fv(vpos(v2).get());
+				glNormal3fv(v0.normal.get());
+				glVertex3fv(v0.pos.get());
+				glNormal3fv(v1.normal.get());
+				glVertex3fv(v1.pos.get());
+				glNormal3fv(v2.normal.get());
+				glVertex3fv(v2.pos.get());
 			}
 			else {
 				glNormal3fv(fnormal(f).get());
-				glVertex3fv(vpos(v0).get());
-				glVertex3fv(vpos(v1).get());
-				glVertex3fv(vpos(v2).get());
+				glVertex3fv(v0.pos.get());
+				glVertex3fv(v1.pos.get());
+				glVertex3fv(v2.pos.get());
 			}
 
 			e1 = e2;
@@ -626,66 +611,6 @@ ManifoldMesh::EdgeKey ManifoldMesh::prev(EdgeKey ek) const
 ManifoldMesh::EdgeKey ManifoldMesh::twin(EdgeKey ek) const
 {
 	return edges[ek].twin;
-}
-
-Vec3f& ManifoldMesh::vpos(const Vertex& v)
-{
-	return vpos(v.self);
-}
-
-const Vec3f& ManifoldMesh::vpos(const Vertex& v) const
-{
-	return vpos(v.self);
-}
-
-Vec3f& ManifoldMesh::vpos(VertKey vk)
-{
-	return vertPositions[vk];
-}
-
-const Vec3f& ManifoldMesh::vpos(VertKey vk) const
-{
-	return vertPositions[vk];
-}
-
-Vec3f& ManifoldMesh::vnormal(const Vertex& v)
-{
-	return vnormal(v.self);
-}
-
-const Vec3f& ManifoldMesh::vnormal(const Vertex& v) const
-{
-	return vnormal(v.self);
-}
-
-Vec3f& ManifoldMesh::vnormal(VertKey vk)
-{
-	return vertNormals[vk];
-}
-
-const Vec3f& ManifoldMesh::vnormal(VertKey vk) const
-{
-	return vertNormals[vk];
-}
-
-Vec3f& ManifoldMesh::fnormal(const Face& f)
-{
-	return fnormal(f.self);
-}
-
-const Vec3f& ManifoldMesh::fnormal(const Face& f) const
-{
-	return fnormal(f.self);
-}
-
-Vec3f& ManifoldMesh::fnormal(FaceKey fk)
-{
-	return faceNormals[fk];
-}
-
-const Vec3f& ManifoldMesh::fnormal(FaceKey fk) const
-{
-	return faceNormals[fk];
 }
 
 void ManifoldMesh::assertConsistent() const

@@ -20,9 +20,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	int *faceData = static_cast<int *>(mxGetData(faces));
 
 	for (const auto& v : mesh.vertices) {
-		vertData[v.self + 0 * numVerts] = mesh.vpos(v)[0];
-		vertData[v.self + 1 * numVerts] = mesh.vpos(v)[1];
-		vertData[v.self + 2 * numVerts] = mesh.vpos(v)[2];
+		vertData[v.self + 0 * numVerts] = v.pos[0];
+		vertData[v.self + 1 * numVerts] = v.pos[1];
+		vertData[v.self + 2 * numVerts] = v.pos[2];
 	}
 
 	for (const auto& f : mesh.faces) {
@@ -41,9 +41,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		mxArray *normals = mxCreateNumericMatrix(numVerts, 3, mxSINGLE_CLASS, mxREAL);
 		float *normData = static_cast<float *>(mxGetData(normals));
 		for (const auto& v : mesh.vertices) {
-			normData[v.self + 0 * numVerts] = mesh.vnormal(v)[0];
-			normData[v.self + 1 * numVerts] = mesh.vnormal(v)[1];
-			normData[v.self + 2 * numVerts] = mesh.vnormal(v)[2];
+			normData[v.self + 0 * numVerts] = v.normal[0];
+			normData[v.self + 1 * numVerts] = v.normal[1];
+			normData[v.self + 2 * numVerts] = v.normal[2];
 		}
 		plhs[2] = normals;
 	}

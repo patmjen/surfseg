@@ -103,13 +103,13 @@ ManifoldMesh surfaceCutPlaneSep(const Volume<float>& cost, const ManifoldMesh&& 
 		for (int pi = 0; pi < planeNormals.size(); ++pi) {
 			Vec3f nrm = planeNormals[pi];
 			float d = planeDists[pi];
-			Vec3f p = mesh.vpos(v);
+			Vec3f p = v.pos;
 			for (int i = 0; i < numSamples; ++i) {
 				if (dot(nrm, p) > d) {
 					size_t ni = costSamples.idx(v.self, i, 0);
 					graph.add_tweights(ni, 0, infOrMax<float>);
 				}
-				p += sampleStep * mesh.vnormal(v);
+				p += sampleStep * v.normal;
 			}
 		}
 	}
@@ -202,9 +202,8 @@ std::vector<ManifoldMesh> surfaceCutPlaneSepQPBO(const Volume<float>& cost, std:
 			}
 			// Add edges from surface to plane
 			for (const auto& v : meshes[i].vertices) {
-				Vec3f p = meshes[i].vpos(v);
-				Vec3f nrm = meshes[i].vnormal(v);
-				if (dot(normal, p) <= dot(normal, ceni) && dot(normal, nrm) <= 0) {
+				Vec3f p = v.pos;
+				if (dot(normal, p) <= dot(normal, ceni) && dot(normal, v.normal) <= 0) {
 					// Vertex is behind the plane and normal points away, so we can skip it
 					continue;
 				}
@@ -222,15 +221,14 @@ std::vector<ManifoldMesh> surfaceCutPlaneSepQPBO(const Volume<float>& cost, std:
 							graph.add_edge(njd, nid, infOrMax<float>, 0);
 							break;
 						}
-						p += sampleStep * nrm;
+						p += sampleStep * v.normal;
 					}
 				}
 			}
 			// Add edges from plane to surface
 			for (const auto& v : meshes[j].vertices) {
-				Vec3f p = meshes[j].vpos(v);
-				Vec3f nrm = meshes[j].vnormal(v);
-				if (dot(normal, p) >= dot(normal, ceni) && dot(normal, nrm) >= 0) {
+				Vec3f p = v.pos;
+				if (dot(normal, p) >= dot(normal, ceni) && dot(normal, v.normal) >= 0) {
 					// Vertex is in front of the plane and normal points away, so we can skip it
 					continue;
 				}
@@ -248,7 +246,7 @@ std::vector<ManifoldMesh> surfaceCutPlaneSepQPBO(const Volume<float>& cost, std:
 							graph.add_edge(njp, nid, infOrMax<float>, 0);
 							break;
 						}
-						p += sampleStep * nrm;
+						p += sampleStep * v.normal;
 					}
 				}
 			}
@@ -342,9 +340,8 @@ std::vector<ManifoldMesh> surfaceCutPlaneSepDual(const Volume<float>& cost, std:
 			}
 			// Add edges from primary surface i to plane positions
 			for (const auto& v : meshes[i].vertices) {
-				Vec3f p = meshes[i].vpos(v);
-				Vec3f nrm = meshes[i].vnormal(v);
-				if (dot(normal, p) <= dot(normal, ceni) && dot(normal, nrm) <= 0) {
+				Vec3f p = v.pos;
+				if (dot(normal, p) <= dot(normal, ceni) && dot(normal, v.normal) <= 0) {
 					// Vertex is behind the plane and normal points away, so we can skip it
 					continue;
 				}
@@ -359,15 +356,14 @@ std::vector<ManifoldMesh> surfaceCutPlaneSepDual(const Volume<float>& cost, std:
 							graph.add_edge(ni, nj, infOrMax<float>, 0);
 							break;
 						}
-						p += sampleStep * nrm;
+						p += sampleStep * v.normal;
 					}
 				}
 			}
 			// Add edges from dual surface j to plane positions
 			for (const auto& v : meshes[j].vertices) {
-				Vec3f p = meshes[j].vpos(v);
-				Vec3f nrm = meshes[j].vnormal(v);
-				if (dot(normal, p) >= dot(normal, ceni) && dot(normal, nrm) >= 0) {
+				Vec3f p = v.pos;
+				if (dot(normal, p) >= dot(normal, ceni) && dot(normal, v.normal) >= 0) {
 					// Vertex is in front of the plane and normal points away, so we can skip it
 					continue;
 				}
@@ -382,7 +378,7 @@ std::vector<ManifoldMesh> surfaceCutPlaneSepDual(const Volume<float>& cost, std:
 							graph.add_edge(ni, nj, infOrMax<float>, 0);
 							break;
 						}
-						p += sampleStep * nrm;
+						p += sampleStep * v.normal;
 					}
 				}
 			}
@@ -489,9 +485,8 @@ std::vector<ManifoldMesh> surfaceCutPlaneSepDualParallel(const Volume<float>& co
 			}
 			// Add edges from primary surface to plane positions
 			for (const auto& v : mesh.vertices) {
-				Vec3f p = mesh.vpos(v);
-				Vec3f nrm = mesh.vnormal(v);
-				if (dot(normal, p) <= dot(normal, ceni) && dot(normal, nrm) <= 0) {
+				Vec3f p = v.pos;
+				if (dot(normal, p) <= dot(normal, ceni) && dot(normal, v.normal) <= 0) {
 					// Vertex is behind the plane and normal points away, so we can skip it
 					continue;
 				}
@@ -506,15 +501,14 @@ std::vector<ManifoldMesh> surfaceCutPlaneSepDualParallel(const Volume<float>& co
 							primalGraph.add_edge(ni, nj, infOrMax<float>, 0);
 							break;
 						}
-						p += sampleStep * nrm;
+						p += sampleStep * v.normal;
 					}
 				}
 			}
 			// Add edges from dual surface to plane positions
 			for (const auto& v : mesh.vertices) {
-				Vec3f p = mesh.vpos(v);
-				Vec3f nrm = mesh.vnormal(v);
-				if (dot(normal, p) >= dot(normal, cenj) && dot(normal, nrm) >= 0) {
+				Vec3f p = v.pos;
+				if (dot(normal, p) >= dot(normal, cenj) && dot(normal, v.normal) >= 0) {
 					// Vertex is in front of the plane and normal points away, so we can skip it
 					continue;
 				}
@@ -529,7 +523,7 @@ std::vector<ManifoldMesh> surfaceCutPlaneSepDualParallel(const Volume<float>& co
 							dualGraph.add_edge(ni, nj, infOrMax<float>, 0);
 							break;
 						}
-						p += sampleStep * nrm;
+						p += sampleStep * v.normal;
 					}
 				}
 			}
@@ -694,7 +688,7 @@ ManifoldMesh& updateVertices(const FloatGraph& graph, const Volume<float>& costS
 		for (int i = costSamples.ny - 1; i >= 0; --i) {
 			size_t ni = costSamples.idx(v.self, i, k) + offset;
 			if (graph.what_segment(ni) == SOURCE) {
-				mesh.vpos(v) += i * sampleStep * mesh.vnormal(v);
+				v.pos += i * sampleStep * v.normal;
 				break;
 			}
 		}
@@ -712,7 +706,7 @@ ManifoldMesh& updateVerticesDual(const FloatGraph& graph, const Volume<float>& c
 		for (int i = costSamples.ny - 1; i >= 0; --i) {
 			size_t ni = costSamples.idx(v.self, i, k) + offset;
 			if (graph.what_segment(ni, SINK) == SINK) {
-				mesh.vpos(v) += i * sampleStep * mesh.vnormal(v);
+				v.pos += i * sampleStep * v.normal;
 				break;
 			}
 		}
@@ -745,7 +739,7 @@ ManifoldMesh& updateVerticesQPBO(const FloatGraph& graph, const Volume<float>& c
 		}
 		if (ip == id) {
 			// Primal and dual graph agree so just update position
-			mesh.vpos(v) += ip * sampleStep * mesh.vnormal(v);
+			v.pos += ip * sampleStep * v.normal;
 		} else {
 			throw std::runtime_error("Primal and dual graph did not agree");
 		}
@@ -928,12 +922,11 @@ Volume<float>& extractCostSamples(const Volume<float>& cost, const ManifoldMesh&
 {
     // Sample volume along vertex normals
     for (const auto& v : mesh.vertices) {
-        Vec3f p = mesh.vpos(v);
-		Vec3f nrm = mesh.vnormal(v);
+        Vec3f p = v.pos;
         for (int i = 0; i < numSamples; ++i) {
-			//p[2] = fmaxf(0.0f, fminf(cost.nz - 1, p[2])); // Pad volume to repeat top and bottom slice
+			p[2] = fmaxf(0.0f, fminf(cost.nz - 1, p[2])); // Pad volume to repeat top and bottom slice
 			samples.at(v.self, i, k) = cost.contains(p) ? cost.interp(p) : infOrMax<float>;
-            p += sampleStep * nrm;
+            p += sampleStep * v.normal;
         }
     }
 

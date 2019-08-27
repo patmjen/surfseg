@@ -46,9 +46,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		int *faceData = static_cast<int *>(mxGetData(faces));
 
 		for (const auto& v : mesh.vertices) {
-			vertData[v.self + 0 * numVerts] = mesh.vpos(v)[0];
-			vertData[v.self + 1 * numVerts] = mesh.vpos(v)[1];
-			vertData[v.self + 2 * numVerts] = mesh.vpos(v)[2];
+			vertData[v.self + 0 * numVerts] = v.pos[0];
+			vertData[v.self + 1 * numVerts] = v.pos[1];
+			vertData[v.self + 2 * numVerts] = v.pos[2];
 		}
 
 		for (const auto& f : mesh.faces) {

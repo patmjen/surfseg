@@ -22,19 +22,25 @@ public:
 	struct Vertex {
 		VertKey self;
 		EdgeKey edge; // Edge pointing out from this vertex
+		Vec3f pos;
+		Vec3f normal;
 
 		Vertex() :
 			self(INVALID_VERT),
-			edge(INVALID_EDGE) {}
+			edge(INVALID_EDGE),
+			pos(Vec3f(0)),
+			normal(Vec3f(0)) {}
 	};
 
 	struct Face {
 		FaceKey self;
 		EdgeKey edge;
+		Vec3f normal;
 
 		Face() :
 			self(INVALID_FACE),
-			edge(INVALID_EDGE) {}
+			edge(INVALID_EDGE),
+			normal(Vec3f(0)) {}
 	};
 
 	struct HalfEdge {
@@ -58,10 +64,6 @@ public:
 	std::vector<Vertex> vertices;
 	std::vector<Face> faces;
 	std::vector<HalfEdge> edges;
-
-	std::vector<Vec3f> vertPositions;
-	std::vector<Vec3f> vertNormals;
-	std::vector<Vec3f> faceNormals;
 
 	explicit ManifoldMesh() = default;
 	ManifoldMesh(const ManifoldMesh& other);
@@ -112,16 +114,6 @@ public:
 	const Vec3f& vpos(const Vertex& v) const;
 	Vec3f& vpos(VertKey vk);
 	const Vec3f& vpos(VertKey vk) const;
-
-	Vec3f& vnormal(const Vertex& v);
-	const Vec3f& vnormal(const Vertex& v) const;
-	Vec3f& vnormal(VertKey vk);
-	const Vec3f& vnormal(VertKey vk) const;
-
-	Vec3f& fnormal(const Face& f);
-	const Vec3f& fnormal(const Face& f) const;
-	Vec3f& fnormal(FaceKey fk);
-	const Vec3f& fnormal(FaceKey fk) const;
 
 	void assertConsistent() const;
 };

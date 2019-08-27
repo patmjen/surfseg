@@ -57,8 +57,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 					Vec3f(initRs.at(0, 1, i), initRs.at(1, 1, i), initRs.at(2, 1, i)),
 					Vec3f(initRs.at(0, 2, i), initRs.at(1, 2, i), initRs.at(2, 2, i))
 				);
-				for (auto& p : init.vertPositions) {
-					p = center + A*(p - center);
+				for (auto& v : init.vertices) {
+					v.pos = center + A*(v.pos - center);
 				}
 			}
 			ManifoldMesh mesh = surfaceCut(cost, std::move(init), numSamples, sampleStep, maxDiff, costType);
@@ -69,9 +69,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			const size_t numFaces = mesh.faces.size();
 
 			for (const auto& v : mesh.vertices) {
-				vertData[i][v.self + 0 * numVerts] = mesh.vpos(v)[0];
-				vertData[i][v.self + 1 * numVerts] = mesh.vpos(v)[1];
-				vertData[i][v.self + 2 * numVerts] = mesh.vpos(v)[2];
+				vertData[i][v.self + 0 * numVerts] = v.pos[0];
+				vertData[i][v.self + 1 * numVerts] = v.pos[1];
+				vertData[i][v.self + 2 * numVerts] = v.pos[2];
 			}
 
 			for (const auto& f : mesh.faces) {

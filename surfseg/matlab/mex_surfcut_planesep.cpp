@@ -84,9 +84,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			const size_t numFaces = mesh.faces.size();
 
 			for (const auto& v : mesh.vertices) {
-				vertData[i][v.self + 0 * numVerts] = mesh.vpos(v)[0];
-				vertData[i][v.self + 1 * numVerts] = mesh.vpos(v)[1];
-				vertData[i][v.self + 2 * numVerts] = mesh.vpos(v)[2];
+				vertData[i][v.self + 0 * numVerts] = v.pos[0];
+				vertData[i][v.self + 1 * numVerts] = v.pos[1];
+				vertData[i][v.self + 2 * numVerts] = v.pos[2];
 			}
 
 			for (const auto& f : mesh.faces) {

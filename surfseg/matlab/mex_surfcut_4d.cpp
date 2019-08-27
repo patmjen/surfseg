@@ -45,16 +45,22 @@ float simpleOnSurfaceCost(const Volume4d<float>& vol, Vec4f pos)
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-	ensureOrError(nrhs == 7, "Must supply 7 inputs");
+	ensureOrError(7 <= nrhs && nrhs <= 8, "Must supply between 7 and 8 inputs");
 	ensureOrError(isSize(prhs[1], { -1, 4 }), "Tets must be an N x 4 array");
 	ensureOrError(isSize(prhs[2], { -1, 4 }), "Vertices must be an M x 4 array");
 	Volume4d<float> vol = getVolume4dChecked<float>(prhs[0], "Volume");
-	Volume<int> tetVol = getVolumeChecked<int>(prhs[1], "Tets");
-	Volume<float> vertVol = getVolumeChecked<float>(prhs[2], "Vertices");
+	Volume<int> tetVol = getCastVolumeChecked<int>(prhs[1], "Tets");
+	Volume<float> vertVol = getCastVolumeChecked<float>(prhs[2], "Vertices");
 	int numSamples = getCastScalarChecked<int>(prhs[3], "numSamples");
 	float sampleStep = getCastScalarChecked<float>(prhs[4], "sampleStep");
 	int maxDiff = getCastScalarChecked<int>(prhs[5], "maxDiff");
 	CostType costType = static_cast<CostType>(getCastScalarChecked<int>(prhs[6], "costType"));
+	std::vector<int> frozenVerts;
+	if (nrhs > 7) {
+		// TODO: This ends up doing unnecessary allocation, copying, and freeing. Check added overhead.
+		Volume<int> frozenVertVol = getCastVolumeChecked<int>(prhs[7], "FrozenVertices");
+		frozenVerts.assign(frozenVertVol.data.get(), frozenVertVol.data.get() + frozenVertVol.numElem());
+	}
 
 	size_t nverts = vertVol.nx;
 	size_t ntets = tetVol.nx;
@@ -79,9 +85,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	TetMesh4d mesh(vertices, tets);
 
 	if (costType == CostType::ON_SURFACE) {
-		mesh = surfaceCut4d(vol, mesh, numSamples, sampleStep, maxDiff, costType, simpleOnSurfaceCost);
+		mesh = surfaceCut4d(vol, mesh, numSamples, sampleStep, maxDiff, costType, simpleOnSurfaceCost,
+			frozenVerts);
 	} else {
-		mesh = surfaceCut4d(vol, mesh, numSamples, sampleStep, maxDiff, costType, simpleRegionCost);
+		mesh = surfaceCut4d(vol, mesh, numSamples, sampleStep, maxDiff, costType, simpleRegionCost,
+			frozenVerts);
 	}
 
 	mxArray *mxVerts = mxCreateNumericMatrix(nverts, 4, mxSINGLE_CLASS, mxREAL);

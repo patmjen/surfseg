@@ -27,10 +27,12 @@ ManifoldMesh surfaceCut(const Volume<float>& cost, const ManifoldMesh&& init,
     int numSamples, float sampleStep, int maxDiff, CostType costType);
 
 TetMesh4d surfaceCut4d(const Volume4d<float>& cost, TetMesh4d mesh,
-	int numSamples, float sampleStep, int maxDiff, CostType costType);
+	int numSamples, float sampleStep, int maxDiff, CostType costType,
+	const std::vector<int>& frozenVerts = std::vector<int>());
 template <class Func>
 TetMesh4d surfaceCut4d(const Volume4d<float>& vol, TetMesh4d mesh,
-	int numSamples, float sampleStep, int maxDiff, CostType costType, Func costFunc);
+	int numSamples, float sampleStep, int maxDiff, CostType costType, Func costFunc,
+	const std::vector<int>& frozenVerts = std::vector<int>());
 
 ManifoldMesh surfaceCutPlaneSep(const Volume<float>& cost, const ManifoldMesh& init,
 	int numSamples, float sampleStep, int maxDiff, CostType costType, std::vector<Vec3f> planeNormals,

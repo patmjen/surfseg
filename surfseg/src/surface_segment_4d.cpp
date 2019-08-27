@@ -8,7 +8,8 @@ static float float_identity(const Volume4d<float>& vol, Vec4f pos)
 }
 
 FloatGraph& buildSurfaceGraph4d(FloatGraph& graph, const Volume<float>& costSamples,
-	TetMesh4d& mesh, int maxDiff, CostType costType, size_t k = 0, size_t offset = 0);
+	TetMesh4d& mesh, int maxDiff, CostType costType, const std::vector<int>& frozenVerts, size_t k = 0,
+	size_t offset = 0);
 
 TetMesh4d& updateVertices4d(const FloatGraph& graph, const Volume<float>& costSamples,
 	TetMesh4d& mesh, float sampleStep, size_t k = 0, size_t offset = 0);
@@ -18,14 +19,15 @@ Volume<float>& extractCostSamples4d(const Volume4d<float>& cost, const TetMesh4d
 	Volume<float>& samples, int numSamples, float sampleStep, Func costFunc, size_t k = 0);
 
 TetMesh4d surfaceCut4d(const Volume4d<float>& cost, TetMesh4d mesh,
-	int numSamples, float sampleStep, int maxDiff, CostType costType)
+	int numSamples, float sampleStep, int maxDiff, CostType costType, const std::vector<int>& frozenVerts)
 {
-	return surfaceCut4d(cost, mesh, numSamples, sampleStep, maxDiff, costType, float_identity);
+	return surfaceCut4d(cost, mesh, numSamples, sampleStep, maxDiff, costType, float_identity, frozenVerts);
 }
 
 template <class Func>
 TetMesh4d surfaceCut4d(const Volume4d<float>& vol, TetMesh4d mesh,
-	int numSamples, float sampleStep, int maxDiff, CostType costType, Func costFunc)
+	int numSamples, float sampleStep, int maxDiff, CostType costType, Func costFunc,
+	const std::vector<int>& frozenVerts)
 {
 	mesh.computeVertexNormals(); // Ensure these are correct
 	size_t numVerts = mesh.vertices.size();
@@ -45,7 +47,7 @@ TetMesh4d surfaceCut4d(const Volume4d<float>& vol, TetMesh4d mesh,
 		graphErrFunc
 	);
 	graph.add_node(totalSamples);
-	buildSurfaceGraph4d(graph, costSamples, mesh, maxDiff, costType);
+	buildSurfaceGraph4d(graph, costSamples, mesh, maxDiff, costType, frozenVerts);
 
 	graph.maxflow();
 
@@ -56,7 +58,8 @@ TetMesh4d surfaceCut4d(const Volume4d<float>& vol, TetMesh4d mesh,
 }
 
 FloatGraph& buildSurfaceGraph4d(FloatGraph& graph, const Volume<float>& costSamples,
-	TetMesh4d& mesh, int maxDiff, CostType costType, size_t k, size_t offset)
+	TetMesh4d& mesh, int maxDiff, CostType costType, const std::vector<int>& frozenVerts, size_t k,
+	size_t offset)
 {
 	using VertKey = TetMesh4d::VertKey;
 
@@ -98,6 +101,14 @@ FloatGraph& buildSurfaceGraph4d(FloatGraph& graph, const Volume<float>& costSamp
 				graph.add_tweights(ni, 0, w);
 			}
 			prevC = c;
+		}
+	}
+
+	// Ensure all frozen vertices cannot move from their initial positions
+	for (int vk : frozenVerts) {
+		for (int i = 1; i < numSamples; ++i) {
+			size_t ni = costSamples.idx(vk, i, k) + offset;
+			graph.add_tweights(ni, 0, infOrMax<float>);
 		}
 	}
 

@@ -62,8 +62,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     ensureOrError(3 <= nrhs && nrhs <= 5, "Must supply between 3 and 5 inputs");
 	ensureOrError(isSize(prhs[0], { -1, 4 }), "Tets must be an N x 4 array");
 	ensureOrError(isSize(prhs[1], { -1, 4 }), "Vertices must be an M x 4 array");
-    const Volume<int> tetVol = getVolumeChecked<int>(prhs[0], "Tets");
-	const Volume<float> vertVol = getVolumeChecked<float>(prhs[1], "Vertices");
+    const Volume<int> tetVol = getCastVolumeChecked<int>(prhs[0], "Tets");
+	const Volume<float> vertVol = getCastVolumeChecked<float>(prhs[1], "Vertices");
     const float time = getCastScalarChecked<float>(prhs[2], "time");
     const Vec4f normal = nrhs < 4 ? Vec4f(0, 0, 0, 1) : getCastVectorChecked<Vec4f>(prhs[3], "Normal");
     const bool triMesh = nrhs < 5 ? false : getCastScalarChecked<bool>(prhs[4], "triMesh");
@@ -74,6 +74,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     std::vector<Vec4f> vertices;
     std::vector<Vec4i> faces; // For triangle meshes, we just ignore the last entry
     std::vector<int> intTets;
+    std::vector<int> faceTetIdxs; // Index of tet. each face "came from"
 
     auto addVertex = [&](int vk, Vec4f v)
     {
@@ -150,6 +151,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             faces.push_back(Vec4i(nvk0, nvk1, nvk3, -1));
             faces.push_back(Vec4i(nvk0, nvk2, nvk3, -1));
             faces.push_back(Vec4i(nvk1, nvk2, nvk3, -1));
+
+            faceTetIdxs.push_back(ti);
+            faceTetIdxs.push_back(ti);
+            faceTetIdxs.push_back(ti);
+            faceTetIdxs.push_back(ti);
         } else if (npos == 2 && nneg == 2) {
             // Intersection is a quad
             const auto idxs = sortIdx4(s0, s1, s2, s3);
@@ -188,8 +194,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             if (triMesh) {
                 faces.push_back(Vec4i(nvk0, nvk1, nvk2, -1));
                 faces.push_back(Vec4i(nvk0, nvk2, nvk3, -1));
+
+                faceTetIdxs.push_back(ti);
+                faceTetIdxs.push_back(ti);
             } else {
                 faces.push_back(Vec4i(nvk0, nvk1, nvk2, nvk3));
+
+                faceTetIdxs.push_back(ti);
             }
         } else if (nzer == 1) {
             // Intersection is a triangular tet face
@@ -202,6 +213,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 newKeys[i] = addVertex(tetKeys[idxs[i]], tetVerts[idxs[i]]);
             }
             faces.push_back(Vec4i(newKeys[0], newKeys[1], newKeys[2], -1));
+
+            faceTetIdxs.push_back(ti);
         } else if (npos == 1 || nneg == 1) {
             // Intersection is a triangle
             const auto idxs = sortIdx4(s0, s1, s2, s3);
@@ -237,6 +250,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             int nvk2 = addTetIntersection(idxA, idxB3);
 
             faces.push_back(Vec4i(nvk0, nvk1, nvk2, -1));
+
+            faceTetIdxs.push_back(ti);
         } else if (nzer == 2 && (npos == 2 || nneg == 2)) {
             // Intersection is line segment
             const auto idxs = sortIdx4(abs(s0), abs(s1), abs(s2), abs(s3)); // We don't care about above or below
@@ -248,6 +263,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             int nvk1 = addVertex(tetKeys[idxs[1]], tetVerts[idxs[1]]);
 
             faces.push_back(Vec4i(nvk0, nvk1, -1, -1));
+
+            faceTetIdxs.push_back(ti);
         } else if (nzer == 1 && (npos == 3 || nneg == 3)) {
             // Intersection is a point
             const auto idxs = sortIdx4(abs(s0), abs(s1), abs(s2), abs(s3)); // We don't care about above or below
@@ -298,5 +315,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             intTetData[i] = intTets[i] + 1;
         }
         plhs[2] = mxIntTets;
+
+        mxArray *mxFaceTetIdxs = mxCreateNumericMatrix(numFaces, 1, mxDOUBLE_CLASS, mxREAL);
+        double *faceTetIdxsData = static_cast<double *>(mxGetData(mxFaceTetIdxs));
+        for (int i = 0; i < numFaces; ++i) {
+            // Add 1 since MATLAB uses 1-indexing
+            faceTetIdxsData[i] = faceTetIdxs[i] + 1;
+        }
+        plhs[3] = mxFaceTetIdxs;
     }
 }

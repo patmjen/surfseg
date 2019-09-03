@@ -45,4 +45,17 @@ constexpr std::enable_if_t<!std::is_floating_point<Ty>::value, Ty> infOrMaxF() {
 template <class Ty>
 constexpr Ty infOrMax = infOrMaxF<Ty>();
 
+template <class Ty>
+constexpr std::enable_if_t<std::is_floating_point<Ty>::value, Ty> minusInfOrMinF() {
+    return -std::numeric_limits<Ty>::infinity();
+}
+
+template <class Ty>
+constexpr std::enable_if_t<!std::is_floating_point<Ty>::value, Ty> minusInfOrMinF() {
+    return std::numeric_limits<Ty>::min();
+}
+
+template <class Ty>
+constexpr Ty minusInfOrMin = minusInfOrMinF<Ty>();
+
 #endif // UTIL_H__

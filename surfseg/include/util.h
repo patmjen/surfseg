@@ -6,6 +6,24 @@
 #include <array>
 #include <limits>
 #include <type_traits>
+#include <stdexcept>
+
+#define STR_INNER_(x) #x
+#define STR(x) STR_INNER_(x)
+
+// Make a helper function so we can set breakpoints
+namespace detail {
+inline void thrower_(const char* msg)
+{
+    throw std::runtime_error(msg);
+}
+}
+
+#define ensureOrThrow(expr) do { \
+    if (!(expr)) { \
+        detail::thrower_(__FILE__ ":" STR(__LINE__) ":'" #expr "' was not true"); \
+    } \
+} while(false)
 
 namespace std {
     // We need to make our hash specialization since std::pair does not have one

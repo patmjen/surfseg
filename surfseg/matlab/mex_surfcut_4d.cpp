@@ -2,6 +2,7 @@
 #include <thread>
 #include <memory>
 #include <cmath>
+#include <algorithm>
 
 #include "mex.h"
 #include "matrix.h"
@@ -60,6 +61,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		// TODO: This ends up doing unnecessary allocation, copying, and freeing. Check added overhead.
 		Volume<int> frozenVertVol = getCastVolumeChecked<int>(prhs[7], "FrozenVertices");
 		frozenVerts.assign(frozenVertVol.data.get(), frozenVertVol.data.get() + frozenVertVol.numElem());
+		std::transform(frozenVerts.begin(), frozenVerts.end(), frozenVerts.begin(),
+			[](auto x) { return x - 1; }); // Subtract 1 since MATLAB uses 1-indexing
 	}
 
 	size_t nverts = vertVol.nx;

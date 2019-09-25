@@ -139,6 +139,9 @@ inline bool isMatrix(const mxArray *a)
 
 bool isSize(const mxArray *a, std::initializer_list<int> size);
 
+void ensureSize(const mxArray* a, std::initializer_list<int> size,
+    const std::string& errPrefixStr = "Value", const std::string& wildcard = "N");
+
 template <class Ty>
 inline void ensureMatchingClass(const mxArray *a, const std::string& errPrefixStr = "Value")
 {

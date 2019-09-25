@@ -16,9 +16,13 @@
 #include "volume.h"
 #include "volume4d.h"
 
+#define abortWithMsg(...) do { \
+    mexErrMsgIdAndTxt("surfseg:internal", __VA_ARGS__); \
+} while(false)
+
 #define ensureOrError(expr, ...) do { \
 	if (!(expr)) { \
-		mexErrMsgIdAndTxt("surfseg:internal", __VA_ARGS__); \
+		abortWithMsg(__VA_ARGS__); \
 	} \
 } while(false)
 
@@ -116,7 +120,7 @@ inline Ty derefAndCast(const void *ptr, mxClassID id)
 	case mxUINT64_CLASS:
 		return static_cast<Ty>(*reinterpret_cast<const mxUint64 *>(ptr));
 	default:
-		mexErrMsgIdAndTxt("surfseg:internal", "derefAndCast: Unknown class ID");
+		abortWithMsg("derefAndCast: Unknown class ID");
 		return Ty(); // NOTE: This will never run as mexErrMsgIdAndTxt aborts execution
 	}
 }

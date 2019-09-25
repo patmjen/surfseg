@@ -62,6 +62,8 @@ constexpr mxClassID getTypeClassId()
 		return mxUNKNOWN_CLASS;
 	}
 }
+template <class Ty>
+constexpr mxClassID typeClassId = getTypeClassId<Ty>();
 
 constexpr const char *getClassNameFromId(mxClassID id)
 {
@@ -141,8 +143,8 @@ template <class Ty>
 inline void ensureMatchingClass(const mxArray *a, const std::string& errPrefixStr = "Value")
 {
 	const char *errPrefix = errPrefixStr.c_str();
-	ensureOrError(mxGetClassID(a) == getTypeClassId<Ty>(), "%s must be of class %s (was: %s)",
-		errPrefix, getClassNameFromId(getTypeClassId<Ty>()), mxGetClassName(a));
+	ensureOrError(mxGetClassID(a) == typeClassId<Ty>, "%s must be of class %s (was: %s)",
+		errPrefix, getClassNameFromId(typeClassId<Ty>), mxGetClassName(a));
 }
 
 template <class Ty>
@@ -227,7 +229,7 @@ inline std::shared_ptr<Ty> getCastSharedPtrChecked(const mxArray *a, const std::
 	ensureOrError(mxIsNumeric(a), "%s must be numeric", errPrefix);
 	ensureOrError(!mxIsComplex(a), "%s must be real", errPrefix);
 
-	if (classId == getTypeClassId<Ty>()) {
+	if (classId == typeClassId<Ty>) {
 		// Type of MATLAB array already matches type, so just use it
 		return std::shared_ptr<Ty>(static_cast<Ty *>(mxGetData(a)), [](auto) {});
 	} else {

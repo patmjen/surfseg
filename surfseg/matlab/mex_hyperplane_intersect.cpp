@@ -22,7 +22,7 @@ constexpr double DBL_NAN = std::numeric_limits<double>::quiet_NaN();
 
 inline int robustSign(float x, float tol)
 {
-    return -static_cast<int>(x < tol) + static_cast<int>(x > tol);
+    return -static_cast<int>(x < -tol) + static_cast<int>(x > tol);
 }
 
 inline Vec4f getVert(const Volume<float>& vertVol, int vertIdx)

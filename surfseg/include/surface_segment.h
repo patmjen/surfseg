@@ -2,6 +2,7 @@
 #define SURFACE_SEGMENT_H__
 
 #include <vector>
+#include <unordered_set>
 
 #include <GEL/CGLA/Vec3f.h>
 
@@ -28,11 +29,11 @@ ManifoldMesh surfaceCut(const Volume<float>& cost, const ManifoldMesh&& init,
 
 TetMesh4d surfaceCut4d(const Volume4d<float>& cost, TetMesh4d mesh,
 	int numSamples, float sampleStep, int maxDiff, CostType costType,
-	const std::vector<int>& frozenVerts = std::vector<int>());
+	const std::unordered_set<int>& frozenVerts = std::unordered_set<int>());
 template <class Func>
 TetMesh4d surfaceCut4d(const Volume4d<float>& vol, TetMesh4d mesh,
 	int numSamples, float sampleStep, int maxDiff, CostType costType, Func costFunc,
-	const std::vector<int>& frozenVerts = std::vector<int>());
+	const std::unordered_set<int>& frozenVerts = std::unordered_set<int>());
 
 ManifoldMesh surfaceCutPlaneSep(const Volume<float>& cost, const ManifoldMesh& init,
 	int numSamples, float sampleStep, int maxDiff, CostType costType, std::vector<Vec3f> planeNormals,

@@ -56,6 +56,20 @@ void ensureSize(const mxArray* a, std::initializer_list<int> size, const std::st
     }
 }
 
+void ensureArgCount(int narg, int num)
+{
+    ensureOrError(narg == num, "Must supply %d inputs", num);
+}
+
+void ensureArgRange(int narg, int min, int max)
+{
+    if (min == max) {
+        ensureArgCount(narg, min);
+    } else {
+        ensureOrError(min <= narg && narg <= max, "Must supply between %d and %d inputs", min, max);
+    }
+}
+
 int getMaxCompThreads()
 {
 	mxArray *matlabCallOut[1] = { 0 };

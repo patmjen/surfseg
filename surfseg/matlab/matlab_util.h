@@ -150,6 +150,10 @@ inline void ensureMatchingClass(const mxArray *a, const std::string& errPrefixSt
 		errPrefix, getClassNameFromId(typeClassId<Ty>), mxGetClassName(a));
 }
 
+void ensureArgCount(int narg, int num);
+
+void ensureArgRange(int narg, int min, int max);
+
 template <class Ty>
 inline Ty getCastScalarChecked(const mxArray *a, const std::string& errPrefixStr = "Value")
 {

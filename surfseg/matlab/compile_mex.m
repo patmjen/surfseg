@@ -31,5 +31,7 @@ mex('mex_subdiv_icosahedron.cpp',COMMON_ARGS{:});
 %%
 mex('mex_hyperplane_intersect.cpp',COMMON_ARGS{:});
 %%
+mex('mex_check_tet_orientation.cpp',COMMON_ARGS{:});
+%%
 mex('mex_hausdorff.cpp',COMMON_ARGS{:},...
     ['-L',MESH_LIB_ROOT_DIR,'/build'],'-lmesh');

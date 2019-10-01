@@ -277,7 +277,7 @@ void extractCostSamples4dElf(const Volume4d<float>& vol, TetMesh4d& mesh, Volume
             const float rv2 = pf[2] - v.pos[2];
             const float rv3 = pf[3] - v.pos[3];
 			
-            // NOTE: Below method is faster than calling sqr_length
+            // NOTE: Using fast inverse square root seems to be ~10% faster, but is less accurate
             const float r2 = rv0 * rv0 + rv1 * rv1 + rv2 * rv2 + rv3 * rv3;
 			const float r = sqrtf(r2);
 			const float r4 = r2 * r2;
